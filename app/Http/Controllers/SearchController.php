@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SearchScheduleRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class SearchController extends Controller
 {
 
-    public function searchSchedule(Request $request) {
+    public function searchSchedule(SearchScheduleRequest $request): JsonResponse
+    {
         $nid = $request->input('nid');
 
-        // Find user based on NID (mocked example)
         $user = User::where('nid', $nid)->first();
 
         if ($user) {
-            return view('your-view-name', ['user' => $user]);
-        } else {
-            return view('your-view-name', ['notFound' => true]);
+            return response()->json(['success' => true, 'user' => $user]);
         }
+
+        return response()->json(['success' => false, 'message' => 'User not found.']);
     }
 }

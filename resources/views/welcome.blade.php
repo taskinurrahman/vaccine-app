@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Vaccine app</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -62,7 +63,7 @@
                     NID Number Below.
                 </h2>
 
-                <form id="nidForm" method="POST" action="{{ route('login') }}">
+                <form id="nidForm">
                     @csrf
                     <div>
                         <input id="nid"
@@ -79,15 +80,12 @@
                         Schedule
                     </button>
                 </form>
-
+                <div id="profileDisplay" class="mt-10 text-white text-center"></div>
             </div>
         </div>
     </div>
 
 </main>
-{{--<footer class="py-16 text-center text-sm text-black">--}}
-{{--    Laravel v{{ Illuminate\Foundation\Application::VERSION }} (PHP v{{ PHP_VERSION }})--}}
-{{--</footer>--}}
 
 
 <footer class="bg-white dark:bg-gray-800">
@@ -116,21 +114,39 @@
 </html>
 <script>
     document.getElementById('nidForm').addEventListener('submit', function (event) {
+        event.preventDefault();
         const nidInput = document.getElementById('nid');
         const errorMessage = document.getElementById('errorMessage');
-        const nidPattern = /^\d{10}$/;
-
-        // Clear previous error message
-        errorMessage.textContent = '';
-
+         errorMessage.textContent = '';
         if (!nidInput.value) {
             errorMessage.textContent = 'NID is required.';
-            event.preventDefault();
-        } else if (!nidPattern.test(nidInput.value)) {
-            errorMessage.textContent = 'NID must be 10 digits.';
-            event.preventDefault();
+        }else {
+            console.log(nidInput.value)
+            axios.post('/search-schedule', {
+                nid: nidInput.value
+            })
+                .then(response => {
+                    if (response.data.success) {
+                        displayUserProfile(response.data.user);
+                    } else {
+                        errorMessage.textContent = response.data.message || 'User not found.';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    errorMessage.textContent = 'An error occurred while fetching the user profile.';
+                });
         }
     });
+
+    function displayUserProfile(user) {
+        const profileDisplay = document.getElementById('profileDisplay');
+        profileDisplay.innerHTML = `
+                <h2>VaccineSchedule</h2>
+                <p><strong>Name:</strong> ${user.name}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+            `;
+    }
 
     function clearError() {
         document.getElementById('errorMessage').textContent = '';
